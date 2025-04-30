@@ -49,3 +49,6 @@ build/
 
 # Misc
 *.tgz
+
+# Yarn lock file
+yarn.lock
