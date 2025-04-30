@@ -17,7 +17,7 @@ const log = (type, message) => {
   if (type === 'error') console.log(chalk.red(`[ERROR ${ts}]`), message);
 };
 
-router.get('/funding-rates-extended', async (_req, res) => {
+router.get('/funding-rates-extended', async (req, res) => {
   console.log('[DEBUG] funding-rates-extended endpoint was hit');
 
   const COINGLASS_SECRET = process.env.API_KEY;
