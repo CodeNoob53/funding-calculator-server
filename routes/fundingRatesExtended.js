@@ -17,6 +17,26 @@ const log = (type, message) => {
   if (type === 'error') console.log(chalk.red(`[ERROR ${ts}]`), message);
 };
 
+// Оновлення кешу кожні 20 секунд
+setInterval(async () => {
+  try {
+    const COINGLASS_SECRET = process.env.API_KEY;
+    if (!COINGLASS_SECRET) return;
+    const { data } = await axios.get(COINGLASS_API, {
+      headers: {
+        accept: 'application/json',
+        coinglassSecret: COINGLASS_SECRET
+      }
+    });
+    if (Array.isArray(data.data)) {
+      fundingCache.set('extended', data);
+      log('update', `[AUTO] Stored ${data.data.length} symbols to cache.`);
+    }
+  } catch (error) {
+    log('error', `[AUTO] ${error?.response?.data || error.message}`);
+  }
+}, 20000);
+
 router.get('/funding-rates-extended', async (req, res) => {
   console.log('[DEBUG] funding-rates-extended endpoint was hit');
 
@@ -40,45 +60,14 @@ router.get('/funding-rates-extended', async (req, res) => {
         coinglassSecret: COINGLASS_SECRET
       }
     });
-
+  
     if (!Array.isArray(data.data)) {
       throw new Error('Expected data.data to be an array');
     }
-
-    const grouped = {};
-
-    for (const item of data.data) {
-      const symbol = item.symbol;
-      const symbolLogo = item.symbolLogo || null;
-      const exchange = item.exchangeName;
-      const exchangeLogo = item.exchangeLogo || null;
-
-      if (!grouped[symbol]) {
-        grouped[symbol] = {
-          symbol,
-          symbolLogo,
-          exchanges: []
-        };
-      }
-
-      if (item.status === 1 || item.status === 2) {
-        grouped[symbol].exchanges.push({
-          exchange,
-          exchangeLogo,
-          rate: item.fundingRate,
-          predictedRate: item.predictedFundingRate,
-          interestRate: item.interestRate,
-          fundingIntervalHours: item.fundingIntervalHours,
-          nextFundingTime: item.nextFundingTime,
-          price: item.price
-        });
-      }
-    }
-
-    const result = Object.values(grouped);
-    fundingCache.set('extended', result);
-    log('update', `Stored ${result.length} symbols to cache.`);
-    res.json(result);
+  
+    fundingCache.set('extended', data);
+    log('update', `Stored ${data.data?.length || 0} symbols to cache.`);
+    res.json(data);
   } catch (error) {
     log('error', error?.response?.data || error.message);
     res.status(500).json({
@@ -86,6 +75,7 @@ router.get('/funding-rates-extended', async (req, res) => {
       details: error?.response?.data || error.message
     });
   }
+  
 });
 
 module.exports = router;
