@@ -7,6 +7,9 @@ const dayjs = require('dayjs');
 
 const router = express.Router();
 const fundingCache = new NodeCache({ stdTTL: 60 });
+// Експортуємо кеш для використання в socket.js
+module.exports = router;
+module.exports.fundingCache = fundingCache;
 
 const COINGLASS_API = 'https://open-api.coinglass.com/public/v2/funding';
 
