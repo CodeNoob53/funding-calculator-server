@@ -48,7 +48,7 @@ For detailed documentation, including architecture, configuration, API endpoints
      ```bash
      cp .env.example .env
      ```
-   - Edit `.env` with your Coinglass API key, JWT secret, and other settings (see [Configuration](#configuration) in [docs/config.md](docs/config.md)).
+   - Edit `.env` with your Coinglass API key, JWT secret, and other settings (see [Configuration](#configuration) in [docs/config.md](docs/doc.md)).
 
 4. **Create Logs Directory**:
    ```bash

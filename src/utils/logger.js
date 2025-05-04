@@ -14,7 +14,7 @@ const customLevels = {
     error: 0,
     warn: 1,
     info: 2,
-    auth: 3,
+    auth: 2, // Змінено з 3 на 2, щоб виводилося за замовчуванням
     connect: 4,
     disconnect: 5,
     update: 6,

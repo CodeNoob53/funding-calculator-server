@@ -5,7 +5,7 @@ const setupServer = require('./server');
 const setupSocketServer = require('./server/socket');
 
 // Перевірка обов'язкових змінних середовища
-const requiredEnv = ['API_KEY', 'JWT_SECRET', 'CLIENT_URL', 'COINGLASS_API_URL'];
+const requiredEnv = ['API_KEY', 'CLIENT_URL', 'COINGLASS_API_URL', 'FUNDING_UPDATE_INTERVAL'];
 for (const env of requiredEnv) {
   if (!process.env[env]) {
     logger('error', `FATAL: ${env} is not defined in .env`);
@@ -14,22 +14,28 @@ for (const env of requiredEnv) {
 }
 
 // Ініціалізація сервера
-const PORT = process.env.PORT || 3001;
 const { app, server } = setupServer();
+
+// Глобальна обробка помилок
+app.use((err, req, res, next) => {
+  logger('error', `Помилка: ${err.message}`);
+  res.status(500).json({ error: 'Внутрішня помилка сервера' });
+});
 
 // Ініціалізація Socket.IO
 const io = setupSocketServer(server);
 
 // Запуск сервера
+const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  logger('info', `Server running on port ${PORT}`);
+  logger('info', `Server running on https://localhost:${PORT}`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   logger('info', 'Received SIGTERM. Performing graceful shutdown...');
   server.close(() => {
-    logger('info', 'HTTP server closed.');
+    logger('info', 'HTTPS server closed.');
     process.exit(0);
   });
   io.close(() => {

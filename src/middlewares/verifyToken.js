@@ -1,32 +1,20 @@
-const jwt = require('jsonwebtoken');
+const logger = require('../utils/logger');
 
-module.exports = (context, tokenSource, next) => {
-  let token;
-  let errorCallback;
+module.exports = function verifyToken(req, res, next) {
+  const apiKey = req.headers['s_api_key'];
 
-  // Визначаємо джерело токена та callback залежно від контексту
-  if (typeof context === 'object' && context.headers) {
-    // HTTP контекст
-    token = context.headers['authorization']?.split(' ')[1];
-    errorCallback = (err) => context.status(403).json({ error: err.message });
-  } else if (typeof context === 'object' && context.handshake) {
-    // WebSocket контекст
-    token = context.handshake.auth?.token;
-    errorCallback = (err) => next(new Error(err.message));
-  } else {
-    return next ? next(new Error('Invalid context for token verification')) : null;
+  // Перевірка API Key
+  if (!apiKey) {
+    logger('error', 'API Key відсутній');
+    return res.status(403).json({ error: 'API Key required' });
   }
 
-  if (!token) {
-    const error = new Error('Token required');
-    return errorCallback(error);
+  const expectedApiKey = process.env.S_API_KEY;
+  if (apiKey !== expectedApiKey) {
+    logger('error', 'Неправильний API Key');
+    return res.status(403).json({ error: 'Invalid API Key' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return errorCallback(err);
-    }
-    if (context.user) context.user = decoded; // Прикріплюємо до контексту
-    if (next) next(); // Для WS
-  });
+  logger('info', 'Автентифікація через API Key успішна');
+  next();
 };
