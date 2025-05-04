@@ -1,9 +1,9 @@
 const { Server } = require('socket.io');
-const jwt = require('jsonwebtoken');
+const verifyToken = require('../middlewares/verifyToken');
 const crypto = require('crypto');
-const logger = require('./utils/logger');
-const config = require('./config');
-const fundingCache = require('./routes/fundingRatesExtended').fundingCache;
+const logger = require('../utils/logger');
+const config = require('../config');
+const fundingCache = require('../services/fundingCache');
 
 const setupSocketServer = (server) => {
   const io = new Server(server, {
@@ -18,20 +18,15 @@ const setupSocketServer = (server) => {
 
   // Middleware для автентифікації
   io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-      logger('error', 'Authentication required: No token provided');
-      return next(new Error('Authentication required: No token provided'));
-    }
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.user = decoded;
-      logger('auth', `Successful authentication for user: ${decoded.id}`);
+    verifyToken(socket, null, (err) => {
+      if (err) {
+        logger('error', `Authentication failed: ${err.message}`);
+        socket.disconnect(true);
+        return;
+      }
+      logger('auth', `Successful authentication for user: ${socket.user.id}`);
       next();
-    } catch (error) {
-      logger('error', `Authentication failed: ${error.message}`);
-      next(new Error(`Authentication failed: ${error.message}`));
-    }
+    });
   });
 
   // Обробка підключень
