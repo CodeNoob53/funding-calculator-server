@@ -1,89 +1,117 @@
-Funding Calculator Server
+# Funding Calculator Server
 
-The Funding Calculator Server is a robust proxy server designed to interface with the Coinglass API, providing real-time funding rate data for cryptocurrency markets. It serves as the backend for a funding calculator application, offering both HTTP and WebSocket interfaces for data retrieval and live updates. Built with Node.js, Express, and Socket.IO, this server ensures high performance, scalability, and reliability.
-Overview
+![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)
+![License](https://img.shields.io/badge/License-ISC-blue.svg)
+![GitHub Issues](https://img.shields.io/github/issues/CodeNoob53/funding-calculator-server.svg)
+
+The **Funding Calculator Server** is a robust proxy server designed to interface with the Coinglass API, providing real-time funding rate data for cryptocurrency markets. It serves as the backend for a funding calculator application, offering both HTTP and WebSocket interfaces for data retrieval and live updates. Built with Node.js, Express, and Socket.IO, this server ensures high performance, scalability, and reliability.
+
+## Overview
+
 This server acts as a bridge between the Coinglass API and client applications, caching data to reduce API calls and delivering real-time updates via WebSocket. It includes features like JWT authentication, rate limiting, Prometheus monitoring, and structured logging for easy maintenance and debugging.
-For detailed documentation, including architecture, configuration, API endpoints, and WebSocket events, please refer to the full documentation.
-Features
 
-Proxy access to Coinglass API for funding rate data.
-Real-time data updates via WebSocket.
-In-memory caching for performance optimization.
-JWT-based authentication for secure access.
-Rate limiting to prevent abuse.
-Prometheus metrics for performance monitoring.
-Structured logging with Winston.
-Graceful shutdown on termination signals.
+For detailed documentation, including architecture, configuration, API endpoints, and WebSocket events, please refer to the [full documentation](docs/config.md).
 
-Prerequisites
+## Features
 
-Node.js: Version 18.0.0 or higher.
-npm: Version 8.0.0 or higher (or Yarn).
-Coinglass API Key: Required for accessing funding rate data.
-Git (optional, for cloning the repository).
+- Proxy access to Coinglass API for funding rate data.
+- Real-time data updates via WebSocket.
+- In-memory caching for performance optimization.
+- JWT-based authentication for secure access.
+- Rate limiting to prevent abuse.
+- Prometheus metrics for performance monitoring.
+- Structured logging with Winston.
+- Graceful shutdown on termination signals.
 
-Installation
+## Prerequisites
 
-Clone the Repository:
-git clone https://github.com/CodeNoob53/funding-calculator-server.git
-cd funding-calculator-server
+- **Node.js**: Version 18.0.0 or higher.
+- **npm**: Version 8.0.0 or higher (or Yarn).
+- **Coinglass API Key**: Required for accessing funding rate data.
+- **Git** (optional, for cloning the repository).
 
+## Installation
 
-Install Dependencies:
-npm install
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/CodeNoob53/funding-calculator-server.git
+   cd funding-calculator-server
+   ```
 
+2. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-Set Up Environment:
+3. **Set Up Environment**:
+   - Copy the `.env.example` file to `.env`:
+     ```bash
+     cp .env.example .env
+     ```
+   - Edit `.env` with your Coinglass API key, JWT secret, and other settings (see [Configuration](#configuration) in [docs/config.md](docs/config.md)).
 
-Copy the .env.example file to .env:cp .env.example .env
+4. **Create Logs Directory**:
+   ```bash
+   mkdir logs
+   ```
 
+## Running the Server
 
-Edit .env with your Coinglass API key, JWT secret, and other settings (see Configuration in docs/config.md).
-
-
-Create Logs Directory:
-mkdir logs
-
-
-
-Running the Server
-Development Mode
-Run the server with auto-restart using nodemon:
+### Development Mode
+Run the server with auto-restart using `nodemon`:
+```bash
 npm run dev
+```
 
-Production Mode
+### Production Mode
 Run the server in production:
+```bash
 npm start
+```
 
-The server will start on the specified port (default: 3001). Check the console for a confirmation log:
+The server will start on the specified port (default: `3001`). Check the console for a confirmation log:
+```
 [HH:mm:ss] INFO   Server running on port 3001
+```
 
-Configuration
-The server is configured via environment variables in the .env file. Refer to the Configuration section in docs/config.md for a detailed list of variables and their defaults.
-Contributing
+## Configuration
+
+The server is configured via environment variables in the `.env` file. Refer to the [Configuration](#configuration) section in [docs/config.md](docs/config.md) for a detailed list of variables and their defaults.
+
+## Contributing
+
 We welcome contributions to enhance the Funding Calculator Server! Please follow these steps:
 
-Fork the repository.
-Create a feature branch:git checkout -b feature/your-feature
+1. Fork the repository.
+2. Create a feature branch:
+   ```bash
+   git checkout -b feature/your-feature
+   ```
+3. Commit your changes:
+   ```bash
+   git commit -m "Add your feature"
+   ```
+4. Push to the branch:
+   ```bash
+   git push origin feature/your-feature
+   ```
+5. Open a pull request.
 
+Please adhere to the [Code of Conduct](CODE_OF_CONDUCT.md) and ensure all changes are well-documented. For more details, see the [Contributing](#contributing) section in [docs/config.md](docs/config.md).
 
-Commit your changes:git commit -m "Add your feature"
+## License
 
+This project is licensed under the **ISC License**. See the [LICENSE](LICENSE) file for details.
 
-Push to the branch:git push origin feature/your-feature
+## Support
 
+If you encounter issues or have questions, please open an issue on the [GitHub Issues page](https://github.com/CodeNoob53/funding-calculator-server/issues).
 
-Open a pull request.
+## Acknowledgments
 
-Please adhere to the Code of Conduct and ensure all changes are well-documented. For more details, see the Contributing section in docs/config.md.
-License
-This project is licensed under the ISC License. See the LICENSE file for details.
-Support
-If you encounter issues or have questions, please open an issue on the GitHub Issues page.
-Acknowledgments
+- Thanks to the Coinglass team for providing the API.
+- Built with love using Node.js, Express, and Socket.IO.
 
-Thanks to the Coinglass team for providing the API.
-Built with love using Node.js, Express, and Socket.IO.
+---
 
-
-Last updated: May 04, 2025
+*Last updated: May 04, 2025*
