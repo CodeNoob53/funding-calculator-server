@@ -5,6 +5,6 @@ const proxyRouter = require('./fundingRates');
 const verifyToken = require('../middlewares/verifyToken');
 
 // Захищаємо всі /api/proxy/* запити
-router.use('/proxy', verifyToken, proxyRouter);
+app.use('/api/proxy', verifyToken, fundingRatesRouter);
 
 module.exports = router;
