@@ -10,7 +10,7 @@ The **Funding Calculator Server** is a robust proxy server designed to interface
 
 This server acts as a bridge between the Coinglass API and client applications, caching data to reduce API calls and delivering real-time updates via WebSocket. It includes features like JWT authentication, rate limiting, Prometheus monitoring, and structured logging for easy maintenance and debugging.
 
-For detailed documentation, including architecture, configuration, API endpoints, and WebSocket events, please refer to the [full documentation](docs/config.md).
+For detailed documentation, including architecture, configuration, API endpoints, and WebSocket events, please refer to the [full documentation](docs/doc.md).
 
 ## Features
 
