@@ -28,14 +28,14 @@ const io = setupSocketServer(server);
 // Запуск сервера
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  logger('info', `Server running on https://localhost:${PORT}`);
+  logger('info', `Server running on port ${PORT}`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   logger('info', 'Received SIGTERM. Performing graceful shutdown...');
   server.close(() => {
-    logger('info', 'HTTPS server closed.');
+    logger('info', 'HTTP server closed.');
     process.exit(0);
   });
   io.close(() => {
