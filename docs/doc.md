@@ -71,6 +71,9 @@ The server is configured via environment variables defined in the .env file. Bel
 # Coinglass API key for accessing funding rates
 API_KEY=your_coinglass_api_key
 
+# Coinglass API URL
+COINGLASS_API_URL=https://open-api.coinglass.com/public/v2/funding
+
 # JWT secret for WebSocket authentication
 JWT_SECRET=your_jwt_secret_key
 
@@ -96,6 +99,7 @@ SOCKET_PING_INTERVAL=10000
 Configuration Details
 
 API_KEY: Your Coinglass API key (required).
+COINGLASS_API_URL: The Coinglass API endpoint for funding rates (default: https://open-api.coinglass.com/public/v2/funding).
 JWT_SECRET: A secure key for JWT authentication (required).
 CLIENT_URL: The frontend URL for CORS (e.g., https://your-client-app.com).
 PORT: The port on which the server runs (default: 3001).

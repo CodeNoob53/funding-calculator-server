@@ -1,84 +1,90 @@
-// server/routes/fundingRatesExtended.js
 const express = require('express');
 const axios = require('axios');
 const NodeCache = require('node-cache');
-const chalk = require('chalk');
-const dayjs = require('dayjs');
+const async = require('async');
+const logger = require('../utils/logger');
+const config = require('../config');
 
 const router = express.Router();
-const fundingCache = new NodeCache({ stdTTL: 60 });
-// Експортуємо кеш для використання в socket.js
-module.exports = router;
-module.exports.fundingCache = fundingCache;
+const fundingCache = new NodeCache({ stdTTL: config.cacheTTL });
 
-const COINGLASS_API = 'https://open-api.coinglass.com/public/v2/funding';
+const COINGLASS_API_URL = process.env.COINGLASS_API_URL;
 
-const log = (type, message) => {
-  const ts = dayjs().format('YYYY-MM-DD HH:mm:ss');
-  if (type === 'hit') console.log(chalk.green(`[CACHE HIT ${ts}]`), message);
-  if (type === 'update') console.log(chalk.yellow(`[CACHE UPDATE ${ts}]`), message);
-  if (type === 'error') console.log(chalk.red(`[ERROR ${ts}]`), message);
+if (!process.env.API_KEY) {
+  logger('error', 'FATAL: API_KEY is not defined in .env');
+}
+
+// Створення черги без використання callback
+const fetchQueue = async.queue(async (task) => {
+  return await task();
+}, 1);
+
+// Функція для отримання даних через чергу
+const fetchFundingData = async () => {
+  return new Promise((resolve, reject) => {
+    fetchQueue.push(
+      async () => {
+        const { data } = await axios.get(COINGLASS_API_URL, {
+          headers: {
+            accept: 'application/json',
+            coinglassSecret: process.env.API_KEY
+          }
+        });
+        return data;
+      },
+      (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      }
+    );
+  });
 };
 
-// Оновлення кешу кожні 20 секунд
+// Автоматичне оновлення кешу
 setInterval(async () => {
   try {
-    const COINGLASS_SECRET = process.env.API_KEY;
-    if (!COINGLASS_SECRET) return;
-    const { data } = await axios.get(COINGLASS_API, {
-      headers: {
-        accept: 'application/json',
-        coinglassSecret: COINGLASS_SECRET
-      }
-    });
+    const data = await fetchFundingData();
     if (Array.isArray(data.data)) {
       fundingCache.set('extended', data);
-      log('update', `[AUTO] Stored ${data.data.length} symbols to cache.`);
+      logger('update', `[AUTO] Stored ${data.data.length} symbols to cache`);
     }
   } catch (error) {
-    log('error', `[AUTO] ${error?.response?.data || error.message}`);
+    logger(
+      'error',
+      `[AUTO] ${error?.response?.data ? JSON.stringify(error.response.data) : error.message}`
+    );
   }
-}, 20000);
+}, config.fundingUpdateInterval);
 
+// Ручний ендпоінт
 router.get('/funding-rates-extended', async (req, res) => {
-  console.log('[DEBUG] funding-rates-extended endpoint was hit');
-
-  const COINGLASS_SECRET = process.env.API_KEY;
-
-  if (!COINGLASS_SECRET) {
-    return res.status(500).json({ error: 'Missing Coinglass API key. Please set API_KEY in .env.' });
-  }
+  logger('info', 'funding-rates-extended endpoint was hit');
 
   const cached = fundingCache.get('extended');
   if (cached) {
-    console.log('[DEBUG] cached:', Array.isArray(cached) ? cached.length : 'no data');
-    log('hit', `Returned ${cached.length} cached symbols.`);
+    logger('hit', `Returned ${cached.data.length} cached symbols`);
     return res.json(cached);
   }
 
   try {
-    const { data } = await axios.get(COINGLASS_API, {
-      headers: {
-        accept: 'application/json',
-        coinglassSecret: COINGLASS_SECRET
-      }
-    });
-  
+    const data = await fetchFundingData();
     if (!Array.isArray(data.data)) {
       throw new Error('Expected data.data to be an array');
     }
-  
     fundingCache.set('extended', data);
-    log('update', `Stored ${data.data?.length || 0} symbols to cache.`);
+    logger('update', `Stored ${data.data.length} symbols to cache`);
     res.json(data);
   } catch (error) {
-    log('error', error?.response?.data || error.message);
+    logger(
+      'error',
+      error?.response?.data ? JSON.stringify(error.response.data) : error.message
+    );
     res.status(500).json({
       error: 'Failed to fetch funding rates from Coinglass',
       details: error?.response?.data || error.message
     });
   }
-  
 });
 
 module.exports = router;
+module.exports.fundingCache = fundingCache;
