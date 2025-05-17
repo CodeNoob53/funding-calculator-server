@@ -6,6 +6,7 @@ const routes = require('../routes');
 const metricsMiddleware = require('../middlewares/metrics');
 const rateLimitMiddleware = require('../middlewares/rateLimit');
 const logger = require('../utils/logger');
+const os = require('os');
 
 const setupServer = () => {
   const app = express();
@@ -33,6 +34,27 @@ const setupServer = () => {
     const client = require('prom-client');
     res.set('Content-Type', client.register.contentType);
     res.end(await client.register.metrics());
+  });
+
+  // Health check endpoint
+  app.get('/health', (req, res) => {
+    const health = {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: {
+        total: os.totalmem(),
+        free: os.freemem(),
+        used: os.totalmem() - os.freemem()
+      },
+      cpu: {
+        loadAvg: os.loadavg(),
+        cpus: os.cpus().length
+      },
+      environment: process.env.NODE_ENV || 'development'
+    };
+    
+    res.json(health);
   });
 
   // Кореневий маршрут
