@@ -16,7 +16,7 @@ const fundingUpdateInterval = process.env.FUNDING_UPDATE_INTERVAL
   : 20; // За документацією: 20 секунд
 
 // Функція для асинхронного оновлення кешу
-const updateCache = async () => {
+const updateCache = async (io) => {
   const cacheKey = 'funding-rates';
   try {
     logger('info', `Оновлення кешу: запит до ${process.env.COINGLASS_API_URL}`);
@@ -27,28 +27,35 @@ const updateCache = async () => {
     const data = response.data;
     // Перевірка структури відповіді від Coinglass
     if (data && typeof data === 'object' && 'code' in data && 'msg' in data && 'data' in data) {
-      cache.set(cacheKey, data);
+      if (io) {
+        // Якщо є WebSocket сервер, використовуємо його для оновлення
+        await io.updateCacheAndBroadcast(data);
+      } else {
+        // Інакше просто оновлюємо кеш
+        cache.set(cacheKey, data);
+      }
       logger('info', 'Кеш успішно оновлено');
-        } else {
+    } else {
       throw new Error('Некоректна структура відповіді від Coinglass API');
     }
   } catch (error) {
     logger('error', `Помилка оновлення кешу: ${error.message}`, { errorDetails: error.response?.data || error });
     // При помилці зберігаємо порожню відповідь з помилковим кодом
-    cache.set(cacheKey, { code: '1', msg: 'Помилка отримання даних', data: [] });
+    const errorData = { code: '1', msg: 'Помилка отримання даних', data: [] };
+    if (io) {
+      await io.updateCacheAndBroadcast(errorData);
+    } else {
+      cache.set(cacheKey, errorData);
+    }
   }
 };
 
 // Ініціалізація кешу при старті
 let isCacheInitialized = false;
-const initializeCache = async () => {
-  await updateCache();
+const initializeCache = async (io) => {
+  await updateCache(io);
   isCacheInitialized = true;
 };
-initializeCache();
-
-// Періодичне оновлення кешу кожні 20 секунд
-setInterval(updateCache, fundingUpdateInterval);
 
 router.get('/funding-rates', async (req, res) => {
   logger('info', `GET /api/proxy/funding-rates`);
@@ -71,4 +78,10 @@ router.get('/funding-rates', async (req, res) => {
   res.status(503).json({ code: '1', msg: 'Дані тимчасово недоступні, спробуйте пізніше', data: [] });
 });
 
-module.exports = router;
+// Експортуємо все разом
+module.exports = {
+  router,
+  cache,
+  initializeCache,
+  updateCache
+};

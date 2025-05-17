@@ -3,6 +3,7 @@ dotenv.config();
 const logger = require('./utils/logger');
 const setupServer = require('./server');
 const setupSocketServer = require('./server/socket');
+const { initializeCache, updateCache } = require('./routes/fundingRates');
 
 // Перевірка обов'язкових змінних середовища
 const requiredEnv = ['API_KEY', 'CLIENT_URL', 'COINGLASS_API_URL', 'FUNDING_UPDATE_INTERVAL'];
@@ -24,6 +25,13 @@ app.use((err, req, res, next) => {
 
 // Ініціалізація Socket.IO
 const io = setupSocketServer(server);
+
+// Ініціалізація кешу з WebSocket підтримкою
+initializeCache(io);
+
+// Періодичне оновлення кешу
+const fundingUpdateInterval = parseInt(process.env.FUNDING_UPDATE_INTERVAL) || 20000;
+setInterval(() => updateCache(io), fundingUpdateInterval);
 
 // Запуск сервера
 const PORT = process.env.PORT || 3001;
