@@ -27,8 +27,18 @@ module.exports = (server) => {
 
   // Функція для порівняння даних та визначення змін
   const findChanges = (oldData, newData) => {
-    if (!oldData || !newData) return newData;
-    
+    // Перевірка на null/undefined
+    if (!oldData || !newData) {
+      logger('debug', 'Old or new data is missing, returning new data');
+      return newData;
+    }
+
+    // Перевірка структури даних
+    if (!Array.isArray(newData.data)) {
+      logger('error', 'Invalid data structure: data is not an array', { newData });
+      return null;
+    }
+
     const changes = {
       code: newData.code,
       msg: newData.msg,
@@ -37,7 +47,13 @@ module.exports = (server) => {
 
     // Порівнюємо кожен символ та його біржі
     newData.data.forEach(newSymbol => {
-      const oldSymbol = oldData.data.find(s => s.symbol === newSymbol.symbol);
+      // Перевірка структури символу
+      if (!newSymbol || !newSymbol.symbol) {
+        logger('warn', 'Invalid symbol structure, skipping', { newSymbol });
+        return;
+      }
+
+      const oldSymbol = oldData.data?.find(s => s.symbol === newSymbol.symbol);
       
       if (!oldSymbol) {
         // Новий символ
@@ -45,34 +61,83 @@ module.exports = (server) => {
         return;
       }
 
-      const changedExchanges = [];
-      newSymbol.exchanges.forEach(newExchange => {
-        const oldExchange = oldSymbol.exchanges.find(e => e.exchange === newExchange.exchange);
-        
-        if (!oldExchange) {
-          // Нова біржа
-          changedExchanges.push(newExchange);
-          return;
-        }
+      // Перевіряємо зміни в uMarginList
+      const changedUMarginList = [];
+      if (Array.isArray(newSymbol.uMarginList)) {
+        newSymbol.uMarginList.forEach(newExchange => {
+          // Перевірка структури біржі
+          if (!newExchange || !newExchange.exchangeName) {
+            logger('warn', 'Invalid uMargin exchange structure, skipping', { newExchange });
+            return;
+          }
 
-        // Порівнюємо значення
-        if (
-          oldExchange.rate !== newExchange.rate ||
-          oldExchange.predictedRate !== newExchange.predictedRate ||
-          oldExchange.interestRate !== newExchange.interestRate ||
-          oldExchange.nextFundingTime !== newExchange.nextFundingTime ||
-          oldExchange.price !== newExchange.price ||
-          oldExchange.status !== newExchange.status
-        ) {
-          changedExchanges.push(newExchange);
-        }
-      });
+          const oldExchange = oldSymbol.uMarginList?.find(e => e.exchangeName === newExchange.exchangeName);
+          
+          if (!oldExchange) {
+            // Нова біржа
+            changedUMarginList.push(newExchange);
+            return;
+          }
 
-      if (changedExchanges.length > 0) {
-        changes.data.push({
-          ...newSymbol,
-          exchanges: changedExchanges
+          // Порівнюємо значення
+          if (
+            oldExchange.rate !== newExchange.rate ||
+            oldExchange.predictedRate !== newExchange.predictedRate ||
+            oldExchange.status !== newExchange.status ||
+            oldExchange.nextFundingTime !== newExchange.nextFundingTime ||
+            oldExchange.fundingIntervalHours !== newExchange.fundingIntervalHours
+          ) {
+            changedUMarginList.push(newExchange);
+          }
         });
+      }
+
+      // Перевіряємо зміни в cMarginList
+      const changedCMarginList = [];
+      if (Array.isArray(newSymbol.cMarginList)) {
+        newSymbol.cMarginList.forEach(newExchange => {
+          // Перевірка структури біржі
+          if (!newExchange || !newExchange.exchangeName) {
+            logger('warn', 'Invalid cMargin exchange structure, skipping', { newExchange });
+            return;
+          }
+
+          const oldExchange = oldSymbol.cMarginList?.find(e => e.exchangeName === newExchange.exchangeName);
+          
+          if (!oldExchange) {
+            // Нова біржа
+            changedCMarginList.push(newExchange);
+            return;
+          }
+
+          // Порівнюємо значення
+          if (
+            oldExchange.rate !== newExchange.rate ||
+            oldExchange.predictedRate !== newExchange.predictedRate ||
+            oldExchange.status !== newExchange.status ||
+            oldExchange.nextFundingTime !== newExchange.nextFundingTime ||
+            oldExchange.fundingIntervalHours !== newExchange.fundingIntervalHours
+          ) {
+            changedCMarginList.push(newExchange);
+          }
+        });
+      }
+
+      // Перевіряємо зміни в цінах
+      const priceChanged = 
+        oldSymbol.uIndexPrice !== newSymbol.uIndexPrice ||
+        oldSymbol.uPrice !== newSymbol.uPrice ||
+        oldSymbol.cIndexPrice !== newSymbol.cIndexPrice ||
+        oldSymbol.cPrice !== newSymbol.cPrice;
+
+      // Додаємо символ до змін, якщо є зміни в будь-якому списку або цінах
+      if (changedUMarginList.length > 0 || changedCMarginList.length > 0 || priceChanged) {
+        const changedSymbol = {
+          ...newSymbol,
+          uMarginList: changedUMarginList.length > 0 ? changedUMarginList : undefined,
+          cMarginList: changedCMarginList.length > 0 ? changedCMarginList : undefined
+        };
+        changes.data.push(changedSymbol);
       }
     });
 
@@ -101,16 +166,20 @@ module.exports = (server) => {
 
   // Функція для оновлення кешу та відправки змін через WebSocket
   const updateCacheAndBroadcast = async (newData) => {
-    const oldData = cache.get('funding-rates');
-    cache.set('funding-rates', newData);
+    try {
+      const oldData = cache.get('funding-rates');
+      cache.set('funding-rates', newData);
 
-    // Знаходимо зміни
-    const changes = findChanges(oldData, newData);
-    
-    // Відправляємо тільки змінені дані
-    if (changes) {
-      io.to('funding-updates').emit('dataUpdate', changes);
-      logger('update', `Відправлено оновлення даних через WebSocket`);
+      // Знаходимо зміни
+      const changes = findChanges(oldData, newData);
+      
+      // Відправляємо тільки змінені дані
+      if (changes) {
+        io.to('funding-updates').emit('dataUpdate', changes);
+        logger('update', `Відправлено оновлення даних через WebSocket`);
+      }
+    } catch (error) {
+      logger('error', `Помилка при оновленні кешу та відправці змін: ${error.message}`);
     }
   };
 
