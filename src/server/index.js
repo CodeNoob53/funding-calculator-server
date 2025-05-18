@@ -4,7 +4,6 @@ const cors = require('cors');
 const morgan = require('morgan');
 const routes = require('../routes');
 const metricsMiddleware = require('../middlewares/metrics');
-const rateLimitMiddleware = require('../middlewares/rateLimit');
 const logger = require('../utils/logger');
 const os = require('os');
 
@@ -63,7 +62,7 @@ const setupServer = () => {
   });
 
   // Централізована обробка помилок
-  app.use((err, req, res, next) => {
+  app.use((err, req, res) => {
     logger('error', err.message);
     res.status(500).json({
       error: 'Internal Server Error',
