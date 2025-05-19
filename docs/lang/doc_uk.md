@@ -194,7 +194,17 @@ npm start
 ### `GET /metrics`
 - **Опис**: Надає метрики Prometheus для моніторингу.
 - **Відповідь**:
-  Метрики, сумісні з Prometheus (наприклад, `http_request_duration_seconds`).
+  Метрики, сумісні з Prometheus (наприклад, `http_request_duration_seconds`, стандартні метрики Node.js).
+
+### `GET /api/monitoring/metrics`
+- **Опис**: Надає розширені метрики Prometheus, включаючи специфічні WebSocket метрики.
+- **Заголовки**:
+  - `x-api-key: <your_api_key>` (обов'язково).
+- **Відповідь**:
+  Метрики, сумісні з Prometheus, включаючи:
+  - `websocket_connections_total`: Загальна кількість WebSocket з'єднань.
+  - `websocket_subscribed_connections`: Кількість підписаних WebSocket з'єднань.
+  - `websocket_heartbeat_latency_avg`: Середня затримка heartbeat у мілісекундах.
 
 ## WebSocket Події
 
@@ -209,6 +219,48 @@ npm start
     auth: { apiKey: 'your_api_key' }
   });
   ```
+
+### Приклад WebSocket Клієнта
+
+Підключіться до сервера та підпишіться на оновлення ставок фандингу в реальному часі:
+
+```javascript
+const { io } = require("socket.io-client");
+
+// Підключення з автентифікацією за API-ключем
+const socket = io("http://localhost:3001", {
+  auth: { apiKey: "your_api_key" }
+});
+
+// Обробка початкових даних
+socket.on("initialData", (data) => {
+  console.log("Отримано початкові дані фандингу:", data);
+});
+
+// Обробка оновлень у реальному часі
+socket.on("dataUpdate", (updates) => {
+  console.log("Отримано оновлення ставок фандингу:", updates);
+});
+
+// Підписка на оновлення
+socket.emit("subscribe");
+
+// Обробка ping-подій з pong-відповіддю
+socket.on("ping", (data) => {
+  socket.emit("pong", data);
+});
+
+// Запит статистики з'єднання
+socket.emit("getConnectionStats");
+socket.on("connectionStats", (stats) => {
+  console.log("Статистика з'єднання:", stats);
+});
+
+// Обробка відключення
+socket.on("disconnect", (reason) => {
+  console.log("Відключено:", reason);
+});
+```
 
 ### Події
 

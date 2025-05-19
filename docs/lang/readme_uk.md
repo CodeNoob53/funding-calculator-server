@@ -81,45 +81,7 @@ npm start
 
 ## Приклад WebSocket клієнта
 
-Підключіться до сервера та підпишіться на оновлення ставок фандингу в реальному часі:
-
-```javascript
-const { io } = require("socket.io-client");
-
-// Підключення з автентифікацією за API-ключем
-const socket = io("http://localhost:3001", {
-  auth: { apiKey: "your_api_key" }
-});
-
-// Обробка початкових даних
-socket.on("initialData", (data) => {
-  console.log("Отримано початкові дані фандингу:", data);
-});
-
-// Обробка оновлень у реальному часі
-socket.on("dataUpdate", (updates) => {
-  console.log("Отримано оновлення ставок фандингу:", updates);
-});
-
-// Підписка на оновлення
-socket.emit("subscribe");
-
-// Обробка ping-подій з pong-відповіддю
-socket.on("ping", (data) => {
-  socket.emit("pong", data);
-});
-
-// Запит статистики з'єднання
-socket.emit("getConnectionStats");
-socket.on("connectionStats", (stats) => {
-  console.log("Статистика з'єднання:", stats);
-});
-
-// Обробка відключення
-socket.on("disconnect", (reason) => {
-  console.log("Відключено:", reason);
-});
-```
+Для детального прикладу реалізації WebSocket клієнта, будь ласка, зверніться до розділу [WebSocket Події](../doc.md#приклад-websocket-клієнта) в документації.
 
 ## Конфігурація
 

@@ -81,45 +81,7 @@ npm start
 
 ## WebSocket客户端示例
 
-连接到服务器并订阅实时资金费率更新：
-
-```javascript
-const { io } = require("socket.io-client");
-
-// 使用API密钥认证连接
-const socket = io("http://localhost:3001", {
-  auth: { apiKey: "your_api_key" }
-});
-
-// 处理初始数据
-socket.on("initialData", (data) => {
-  console.log("收到初始资金数据:", data);
-});
-
-// 处理实时更新
-socket.on("dataUpdate", (updates) => {
-  console.log("收到资金费率更新:", updates);
-});
-
-// 订阅更新
-socket.emit("subscribe");
-
-// 处理ping事件并回应pong
-socket.on("ping", (data) => {
-  socket.emit("pong", data);
-});
-
-// 请求连接统计
-socket.emit("getConnectionStats");
-socket.on("connectionStats", (stats) => {
-  console.log("连接统计:", stats);
-});
-
-// 处理断开连接
-socket.on("disconnect", (reason) => {
-  console.log("已断开连接:", reason);
-});
-```
+有关WebSocket客户端实现的详细示例，请参阅文档中的[WebSocket事件](../doc.md#websocket客户端示例)部分。
 
 ## 配置
 

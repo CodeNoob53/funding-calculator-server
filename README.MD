@@ -81,45 +81,7 @@ The server will start on the specified port (default: `3001`). Check the console
 
 ## WebSocket Client Example
 
-Connect to the server and subscribe to real-time funding rate updates:
-
-```javascript
-const { io } = require("socket.io-client");
-
-// Connect with API key authentication
-const socket = io("http://localhost:3001", {
-  auth: { apiKey: "your_api_key" }
-});
-
-// Handle initial data
-socket.on("initialData", (data) => {
-  console.log("Received initial funding data:", data);
-});
-
-// Handle real-time updates
-socket.on("dataUpdate", (updates) => {
-  console.log("Received funding rate updates:", updates);
-});
-
-// Subscribe to updates
-socket.emit("subscribe");
-
-// Handle ping events with pong response
-socket.on("ping", (data) => {
-  socket.emit("pong", data);
-});
-
-// Request connection statistics
-socket.emit("getConnectionStats");
-socket.on("connectionStats", (stats) => {
-  console.log("Connection statistics:", stats);
-});
-
-// Handle disconnection
-socket.on("disconnect", (reason) => {
-  console.log("Disconnected:", reason);
-});
-```
+For a detailed WebSocket client implementation example, please refer to the [WebSocket Events](docs/doc.md#websocket-client-example) section in the documentation.
 
 ## Configuration
 

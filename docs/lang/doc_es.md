@@ -210,6 +210,48 @@ El servidor utiliza Socket.IO para actualizaciones de datos en tiempo real con c
   });
   ```
 
+### Ejemplo de Cliente WebSocket
+
+Conectarse al servidor y suscribirse a actualizaciones de tasas de financiación en tiempo real:
+
+```javascript
+const { io } = require("socket.io-client");
+
+// Conectar con autenticación por clave API
+const socket = io("http://localhost:3001", {
+  auth: { apiKey: "your_api_key" }
+});
+
+// Manejar datos iniciales
+socket.on("initialData", (data) => {
+  console.log("Datos iniciales de financiación recibidos:", data);
+});
+
+// Manejar actualizaciones en tiempo real
+socket.on("dataUpdate", (updates) => {
+  console.log("Actualizaciones de tasas de financiación recibidas:", updates);
+});
+
+// Suscribirse a actualizaciones
+socket.emit("subscribe");
+
+// Manejar eventos ping con respuesta pong
+socket.on("ping", (data) => {
+  socket.emit("pong", data);
+});
+
+// Solicitar estadísticas de conexión
+socket.emit("getConnectionStats");
+socket.on("connectionStats", (stats) => {
+  console.log("Estadísticas de conexión:", stats);
+});
+
+// Manejar desconexión
+socket.on("disconnect", (reason) => {
+  console.log("Desconectado:", reason);
+});
+```
+
 ### Eventos
 
 - **`initialData`**:
