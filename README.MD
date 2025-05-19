@@ -8,16 +8,21 @@ The **Funding Calculator Server** is a robust proxy server designed to interface
 
 ## Overview
 
-This server acts as a bridge between the Coinglass API and client applications, caching data to reduce API calls and delivering real-time updates via WebSocket. It includes features like JWT authentication, rate limiting, Prometheus monitoring, and structured logging for easy maintenance and debugging.
+This server acts as a bridge between the Coinglass API and client applications, caching data to reduce API calls and delivering real-time updates via WebSocket. It includes features like API key authentication, rate limiting, Prometheus monitoring, and structured logging for easy maintenance and debugging.
 
 For detailed documentation, including architecture, configuration, API endpoints, and WebSocket events, please refer to the [full documentation](docs/doc.md).
 
 ## Features
 
 - Proxy access to Coinglass API for funding rate data.
-- Real-time data updates via WebSocket.
+- Real-time data updates via WebSocket with smart change detection.
 - In-memory caching for performance optimization.
-- JWT-based authentication for secure access.
+- API key authentication for secure access.
+- Advanced WebSocket features including:
+  - Custom heartbeat monitoring
+  - Connection statistics tracking
+  - Latency measurement
+  - Selective data subscription
 - Rate limiting to prevent abuse.
 - Prometheus metrics for performance monitoring.
 - Structured logging with Winston.
@@ -48,7 +53,7 @@ For detailed documentation, including architecture, configuration, API endpoints
      ```bash
      cp .env.example .env
      ```
-   - Edit `.env` with your Coinglass API key, JWT secret, and other settings (see [Configuration](#configuration) in [docs/config.md](docs/doc.md)).
+   - Edit `.env` with your Coinglass API key and other settings (see [Configuration](docs/doc.md#configuration)).
 
 4. **Create Logs Directory**:
    ```bash
@@ -74,9 +79,51 @@ The server will start on the specified port (default: `3001`). Check the console
 [HH:mm:ss] INFO   Server running on port 3001
 ```
 
+## WebSocket Client Example
+
+Connect to the server and subscribe to real-time funding rate updates:
+
+```javascript
+const { io } = require("socket.io-client");
+
+// Connect with API key authentication
+const socket = io("http://localhost:3001", {
+  auth: { apiKey: "your_api_key" }
+});
+
+// Handle initial data
+socket.on("initialData", (data) => {
+  console.log("Received initial funding data:", data);
+});
+
+// Handle real-time updates
+socket.on("dataUpdate", (updates) => {
+  console.log("Received funding rate updates:", updates);
+});
+
+// Subscribe to updates
+socket.emit("subscribe");
+
+// Handle ping events with pong response
+socket.on("ping", (data) => {
+  socket.emit("pong", data);
+});
+
+// Request connection statistics
+socket.emit("getConnectionStats");
+socket.on("connectionStats", (stats) => {
+  console.log("Connection statistics:", stats);
+});
+
+// Handle disconnection
+socket.on("disconnect", (reason) => {
+  console.log("Disconnected:", reason);
+});
+```
+
 ## Configuration
 
-The server is configured via environment variables in the `.env` file. Refer to the [Configuration](#configuration) section in [docs/config.md](docs/config.md) for a detailed list of variables and their defaults.
+The server is configured via environment variables in the `.env` file. Refer to the [Configuration](docs/doc.md#configuration) section in the documentation for a detailed list of variables and their defaults.
 
 ## Contributing
 
@@ -97,7 +144,7 @@ We welcome contributions to enhance the Funding Calculator Server! Please follow
    ```
 5. Open a pull request.
 
-Please adhere to the [Code of Conduct](CODE_OF_CONDUCT.md) and ensure all changes are well-documented. For more details, see the [Contributing](#contributing) section in [docs/config.md](docs/config.md).
+Please adhere to the Code of Conduct and ensure all changes are well-documented.
 
 ## License
 
@@ -114,4 +161,4 @@ If you encounter issues or have questions, please open an issue on the [GitHub I
 
 ---
 
-*Last updated: May 04, 2025*
+*Last updated: May 2025*

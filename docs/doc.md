@@ -198,7 +198,7 @@ The server will start on the specified `PORT` (default: `3001`). You should see 
 
 ## WebSocket Events
 
-The server uses Socket.IO for real-time data updates. Clients must authenticate with an API key.
+The server uses Socket.IO for real-time data updates with advanced features like custom heartbeat monitoring, connection statistics, and smart change detection.
 
 ### Connection
 - **Event**: `connection`
@@ -232,6 +232,48 @@ The server uses Socket.IO for real-time data updates. Clients must authenticate 
 - **`dataUpdate`**:
   - **Description**: Emitted every 20 seconds (configurable via `FUNDING_UPDATE_INTERVAL`) if data has changed.
   - **Payload**: Updated funding rate data (same format as `initialData`).
+  - **Note**: The server implements a smart change detection algorithm that only sends modified data to reduce bandwidth usage.
+
+- **`ping`**:
+  - **Description**: Server-initiated heartbeat to check client connectivity.
+  - **Payload**: `{ timestamp: 1714828800000 }`
+  - **Expected Response**: Client should respond with a `pong` event containing the same timestamp.
+
+- **`pong`**:
+  - **Description**: Client response to server's `ping` event.
+  - **Payload**: `{ timestamp: 1714828800000 }` (same timestamp received in the ping)
+  - **Note**: Used to calculate connection latency and detect disconnected clients.
+
+- **`subscribe`**:
+  - **Description**: Client event to subscribe to real-time funding rate updates.
+  - **Payload**: None
+  - **Response**: None, but client will start receiving `dataUpdate` events.
+
+- **`unsubscribe`**:
+  - **Description**: Client event to stop receiving funding rate updates.
+  - **Payload**: None
+  - **Response**: None, client will stop receiving `dataUpdate` events.
+
+- **`getConnectionStats`**:
+  - **Description**: Client request for connection statistics.
+  - **Payload**: None
+  - **Response**: `connectionStats` event with detailed connection metrics.
+
+- **`connectionStats`**:
+  - **Description**: Server response with connection statistics.
+  - **Payload**:
+    ```json
+    {
+      "connectedAt": "2023-05-04T12:34:56.789Z",
+      "sessionDuration": 3600,
+      "pingCount": 120,
+      "pongCount": 120,
+      "missedPongs": 0,
+      "currentLatency": 45,
+      "averageLatency": 52,
+      "isSubscribed": true
+    }
+    ```
 
 - **`disconnect`**:
   - **Description**: Triggered when a client disconnects.
